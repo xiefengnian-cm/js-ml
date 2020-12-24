@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      #c {
+        width: 280px;
+        height: 280px;
+        border: solid black 1px;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="c"></canvas>
+    <h2 id="lab"></h2>
+    <script>
+      const labEle = document.getElementById('lab');
+      const c = document.getElementById('c');
+      c.width = 28;
+      c.height = 28;
+      const ctx = c.getContext('2d');
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', '/get_random_train_img');
+      xhr.send();
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status == 200) {
+          console.log(xhr);
+          const { img, lab } = JSON.parse(xhr.response);
+          render(img);
+          labEle.innerHTML = lab;
+        }
+      };
+      const render = (img) => {
+        const uint8_arr = img[0];
+        const img_arr = [];
+        uint8_arr.forEach((item) => {
+          const [r, g, b, a] = [item, item, item, 255];
+          img_arr.push(r);
+          img_arr.push(g);
+          img_arr.push(b);
+          img_arr.push(a);
+        });
+        console.log(img_arr);
+        const u_img = new Uint8ClampedArray(img_arr);
+        const imgData = new ImageData(u_img, 28, 28);
+        ctx.putImageData(imgData, 0, 0);
+      };
+    </script>
+  </body>
+</html>
+
+<!-- 
+    2*3     3*2    2*2
+  [1,1,1]  [1,1]   [1*1+1*2+1*3,1*1+1*2+1*3]
+  [2,2,2]  [2,2]   [2...]
+            [3,3]
+
+  [1,2,3]   [4,5,6]
+ -->

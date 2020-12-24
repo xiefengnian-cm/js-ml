@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      body {
+        overflow: hidden;
+      }
+      #c {
+        /* width: 280px;
+        height: 280px; */
+        display: block;
+      }
+      .c-wrap {
+        display: inline-block;
+        border: solid black 1px;
+        /* background-color:; */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="c-wrap">
+      <canvas id="c"></canvas>
+    </div>
+    <br />
+    <button id="btn">predict</button>
+    <button id="clear_btn">clear</button>
+    <button id="get_test_btn">get test img</button>
+    <h2 id="lab"></h2>
+    <script>
+      const getTestBtnEle = document.getElementById('get_test_btn');
+      const btnEle = document.getElementById('btn');
+      const clearEle = document.getElementById('clear_btn');
+      const labEle = document.getElementById('lab');
+      const c = document.getElementById('c');
+      const C_WIDTH = document.body.clientWidth < 600 ? document.body.clientWidth : 600;
+      c.style.width = C_WIDTH + 'px';
+      c.style.height = C_WIDTH + 'px';
+      const d = C_WIDTH / 28;
+      c.width = 28;
+      c.height = 28;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, 28, 28);
+      // 发送数据获取预测
+      const send_img = () => {
+        const xhr = new XMLHttpRequest();
+        const imgData = ctx.getImageData(0, 0, 28, 28);
+        const img = [];
+        let i = 0;
+        while (i < imgData.data.length) {
+          img.push(imgData.data[i + 3] === 255 ? imgData.data[i] : 0);
+          i += 4;
+        }
+        if (img.length !== 784) {
+          return alert('img should be 784 pixels!');
+        }
+        // console.log(Array.prototype.join.call(imgData.data, ','));
+        // console.log(img.join(','));
+        xhr.open('POST', '/predict');
+        xhr.setRequestHeader('content-type', 'application/json');
+        xhr.send(JSON.stringify({ img: img }));
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4 && xhr.status == 200) {
+            labEle.innerHTML = xhr.response;
+          }
+        };
+      };
+      btnEle.onclick = send_img;
+      // 绘图获取图片
+      let state_is_mousedown = false;
+
+      const begin_draw = (x, y) => {
+        ctx.moveTo(x, y);
+      };
+
+      const draw = (x, y) => {
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1;
+        ctx.lineJoin = ctx.lineCap = 'round';
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      };
+      // pc端
+      c.addEventListener('mousemove', function (ev) {
+        if (!state_is_mousedown) {
+          return;
+        }
+        draw(Math.floor(ev.offsetX / d), Math.floor(ev.offsetY / d));
+      });
+      document.addEventListener('mousedown', (ev) => {
+        state_is_mousedown = true;
+        begin_draw(Math.floor(ev.offsetX / d), Math.floor(ev.offsetY / d));
+      });
+      document.addEventListener('mouseup', () => {
+        state_is_mousedown = false;
+      });
+      // 移动端
+      c.addEventListener('touchmove', function (ev) {
+        if (!state_is_mousedown) {
+          return;
+        }
+        draw(Math.floor(ev.targetTouches[0].clientX / d), Math.floor(ev.targetTouches[0].clientY / d));
+      });
+      document.addEventListener('touchstart', (ev) => {
+        state_is_mousedown = true;
+        begin_draw(Math.floor(ev.targetTouches[0].clientX / d), Math.floor(ev.targetTouches[0].clientY / d));
+      });
+      document.addEventListener('touchend', () => {
+        state_is_mousedown = false;
+      });
+      document.addEventListener('touchcancel', () => {
+        state_is_mousedown = false;
+      });
+
+      // 清除画布
+      clearEle.onclick = () => {
+        c.width = c.width;
+        c.height = c.height;
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, 28, 28);
+        labEle.innerHTML = '';
+      };
+
+      // 获取一个测试图片用于测试
+      const get_test_img = () => {
+        labEle.innerHTML = '';
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', '/get_random_test_img');
+        xhr.send();
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4 && xhr.status == 200) {
+            console.log(xhr);
+            const { img } = JSON.parse(xhr.response);
+            render(img);
+          }
+        };
+        const render = (img) => {
+          c.width = c.width;
+          c.height = c.height;
+          const uint8_arr = img[0];
+          const img_arr = [];
+          uint8_arr.forEach((item) => {
+            const [r, g, b, a] = [item, item, item, 255];
+            img_arr.push(r);
+            img_arr.push(g);
+            img_arr.push(b);
+            img_arr.push(a);
+          });
+          const u_img = new Uint8ClampedArray(img_arr);
+          const imgData = new ImageData(u_img, 28, 28);
+          ctx.putImageData(imgData, 0, 0);
+        };
+      };
+      getTestBtnEle.onclick = get_test_img;
+    </script>
+  </body>
+</html>
