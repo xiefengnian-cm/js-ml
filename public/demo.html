@@ -36,6 +36,7 @@
         const uint8_arr = img[0];
         const img_arr = [];
         uint8_arr.forEach((item) => {
+          item = item*255
           const [r, g, b, a] = [item, item, item, 255];
           img_arr.push(r);
           img_arr.push(g);

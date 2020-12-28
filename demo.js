@@ -60,7 +60,7 @@ const getImgs = (path) => {
     const b_index = i * 28 * 28;
     const e_index = (i + 1) * 28 * 28;
     const img = uint8.slice(b_index, e_index);
-    imgs.push(new Matrix([img]));
+    imgs.push(new Matrix([img]).div(255));
   }
   return imgs;
 };
@@ -158,7 +158,7 @@ const init_parameters = function () {
  */
 const predict = function (img, init_parameters) {
   const l0_in = Matrix.add(img, parameters[0]['b']);
-  const l0_out = activation[0](l0_in);
+  const l0_out = activation[0](l0_in); 
   const l1_in = Matrix.add(parameters[1]['b'], l0_out.mmul(parameters[1]['w']));
   const l1_out = activation[1](l1_in);
   return l1_out;
@@ -195,9 +195,9 @@ const onehot = Matrix.identity(dimension.slice(-1)[0]);
  * @param {any} parameters 
  */
 const sqr_loss = function (img, lab, parameters) {
-  const y_pred = predict(img, parameters);
-  const y = onehot.getRowVector(lab);
-  const diff = Matrix.sub(y, y_pred);
+  const y_pred = predict(img, parameters); 
+  const y = onehot.getRowVector(lab); 
+  const diff = Matrix.sub(y, y_pred); 
   return diff.dot(diff);
 };
 
@@ -311,19 +311,19 @@ const learn_self = function(learn_rate){
   }
 }
 
-const run_train = function(){
-  const learn_rate = 1
-  const model = JSON.parse(fs.readFileSync('./model',{encoding:'utf-8'}));
-        model[0]['b'] = new Matrix(model[0]['b'])
-        model[1]['b'] = new Matrix(model[1]['b'])
-        model[1]['w'] = new Matrix(model[1]['w'])
-  let parameters = model;
-  valid_accuracy(parameters)
-  learn_self(learn_rate)
-  valid_accuracy(parameters)
-  fs.writeFileSync('./model_new',JSON.stringify(parameters),{encoding:'utf-8'})
-}
-
+// const run_train = function(){
+  // const learn_rate = 1
+  // const model = JSON.parse(fs.readFileSync('./model_new',{encoding:'utf-8'}));
+  //       model[0]['b'] = new Matrix(model[0]['b'])
+  //       model[1]['b'] = new Matrix(model[1]['b'])
+  //       model[1]['w'] = new Matrix(model[1]['w'])
+  // let parameters = init_parameters();
+  // valid_accuracy(parameters)
+  // learn_self(learn_rate)
+  // valid_accuracy(parameters)
+  // fs.writeFileSync('./model_new_255',JSON.stringify(parameters),{encoding:'utf-8'})
+// }
+// run_train();
 
 /**
  * 
@@ -331,7 +331,7 @@ const run_train = function(){
  * @param {any} parameters 
  */
 const exports_predict = function (img, parameters) {
-  img = new Matrix([img])
+  img = new Matrix([img]).div(255);
   const l0_in = Matrix.add(img, parameters[0]['b']);
   const l0_out = activation[0](l0_in);
   const l1_in = Matrix.add(parameters[1]['b'], l0_out.mmul(parameters[1]['w']));

@@ -9,7 +9,7 @@ app.listen(3900);
 app.use(express.static('./public'));
 
 
-const model = load_model(path.resolve(__dirname,'./model_new'));
+const model = load_model(path.resolve(__dirname,'./model_new_255'));
 
 
 app.get('/get_random_train_img',(req,res)=>{
